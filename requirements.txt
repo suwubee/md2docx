@@ -1,0 +1,9 @@
+# 核心依赖
+Flask
+pypandoc
+markdown
+Werkzeug
+
+# Mermaid渲染支持（纯Python方案）
+matplotlib
+networkx

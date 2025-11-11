@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown转DOCX - 文档转换工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel h2::before {
+            content: '📝';
+            font-size: 1.2em;
+        }
+
+        .panel.preview h2::before {
+            content: '👁️';
+        }
+
+        textarea {
+            width: 100%;
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .settings {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        label::before {
+            content: '▸';
+            color: #667eea;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .preview-content {
+            flex: 1;
+            padding: 20px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        .preview-content table {
+            border-collapse: collapse;
+            margin: 15px 0;
+            display: table;
+            width: auto;
+            max-width: 100%;
+        }
+
+        .preview-content table th,
+        .preview-content table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .preview-content table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        /* 表格容器 */
+        .preview-content {
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .preview-content h1,
+        .preview-content h2,
+        .preview-content h3 {
+            color: #667eea;
+            margin: 20px 0 10px 0;
+        }
+
+        .preview-content code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+        }
+
+        .preview-content pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .template-info {
+            grid-column: 1 / -1;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .template-info strong {
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sample-buttons {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sample {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-sample:hover {
+            background: #dee2e6;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                height: auto;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                overflow: visible;
+            }
+            
+            .panel {
+                height: auto;
+            }
+            
+            textarea {
+                min-height: 300px;
+                resize: vertical;
+            }
+            
+            .preview-content {
+                min-height: 300px;
+            }
+
+            .settings {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📄 Markdown转DOCX</h1>
+            <p>简单、快速、优雅的文档转换工具</p>
+        </header>
+
+        <div class="main-content">
+            <div class="panel">
+                <h2>Markdown输入</h2>
+                <textarea id="markdownInput" placeholder="在此粘贴或输入您的Markdown内容...
+
+示例：
+# 一级标题
+## 二级标题
+
+这是一个**粗体**文字和*斜体*文字的段落。
+
+- 列表项1
+- 列表项2
+
+| 列名1 | 列名2 |
+|------|------|
+| 数据1 | 数据2 |
+"></textarea>
+            </div>
+
+            <div class="panel preview">
+                <h2>实时预览</h2>
+                <div class="preview-content" id="previewContent">
+                    <p style="color: #999; text-align: center; padding: 50px;">预览内容将显示在这里...</p>
+                </div>
+            </div>
+
+            <div class="sample-buttons">
+                <strong style="width: 100%; margin-bottom: 5px;">📚 加载示例文档：</strong>
+                <button class="btn-sample" onclick="loadSample('example1')">示例1: 技术方案</button>
+                <button class="btn-sample" onclick="loadSample('example2')">示例2: 产品文档</button>
+                <button class="btn-sample" onclick="clearContent()">清空内容</button>
+            </div>
+
+            <div class="settings panel">
+                <div class="template-info">
+                    <strong>📋 可用模板：</strong>
+                    {% if templates %}
+                        找到 {{ templates|length }} 个模板文件
+                    {% else %}
+                        未找到模板文件（将使用默认样式）
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label>选择Word模板</label>
+                    <select id="templateSelect">
+                        <option value="">默认模板（无样式）</option>
+                        {% for template in templates %}
+                        <option value="{{ template }}">{{ template }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>输出文件名</label>
+                    <input type="text" id="outputFilename" value="转换文档.docx" placeholder="输出文件名.docx">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="previewMarkdown()">
+                        👁️ 预览
+                    </button>
+                    <button class="btn-success" onclick="convertToDocx()">
+                        ⬇️ 转换并下载
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="messageBox" class="message"></div>
+        
+        <div id="loadingBox" class="loading">
+            <div class="spinner"></div>
+            <p>正在转换，请稍候...</p>
+        </div>
+    </div>
+
+    <script>
+        // 自动预览
+        let previewTimeout;
+        document.getElementById('markdownInput').addEventListener('input', function() {
+            clearTimeout(previewTimeout);
+            previewTimeout = setTimeout(() => {
+                previewMarkdown();
+            }, 500);
+        });
+
+        // 预览Markdown
+        function previewMarkdown() {
+            const markdown = document.getElementById('markdownInput').value;
+            
+            if (!markdown.trim()) {
+                document.getElementById('previewContent').innerHTML = 
+                    '<p style="color: #999; text-align: center; padding: 50px;">预览内容将显示在这里...</p>';
+                return;
+            }
+
+            fetch('/preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'markdown_text=' + encodeURIComponent(markdown)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('previewContent').innerHTML = data.html;
+                } else {
+                    showMessage('预览失败: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('预览失败: ' + error, 'error');
+            });
+        }
+
+        // 转换为DOCX
+        function convertToDocx() {
+            const markdown = document.getElementById('markdownInput').value;
+            const template = document.getElementById('templateSelect').value;
+            const filename = document.getElementById('outputFilename').value;
+
+            if (!markdown.trim()) {
+                showMessage('请输入Markdown内容！', 'error');
+                return;
+            }
+
+            // 显示加载动画
+            document.getElementById('loadingBox').classList.add('active');
+
+            const formData = new FormData();
+            formData.append('markdown_text', markdown);
+            formData.append('template', template);
+            formData.append('output_filename', filename);
+
+            fetch('/convert', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || '转换失败');
+                    });
+                }
+            })
+            .then(blob => {
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showMessage('✅ 转换成功！文件已开始下载。', 'success');
+            })
+            .catch(error => {
+                showMessage('❌ ' + error.message, 'error');
+            })
+            .finally(() => {
+                document.getElementById('loadingBox').classList.remove('active');
+            });
+        }
+
+        // 显示消息
+        function showMessage(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = 'message ' + type;
+            messageBox.style.display = 'block';
+
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
+        }
+
+        // 加载示例
+        function loadSample(type) {
+            if (type === 'example1') {
+                document.getElementById('markdownInput').value = `# 项目技术方案示例
+
+## 一、项目概述
+
+本项目旨在构建一个现代化的信息管理系统，通过数字化手段提升业务效率。
+
+### 1.1 项目背景
+
+随着信息技术的发展，传统管理模式已无法满足当前需求。本项目应运而生。
+
+### 1.2 项目目标
+
+| 目标类别 | 具体指标 | 完成时间 | 优先级 |
+|---------|---------|---------|--------|
+| 效率提升 | 提高50%以上 | 2024年Q4 | ⭐⭐⭐⭐⭐ |
+| 成本降低 | 降低30%运营成本 | 2025年Q1 | ⭐⭐⭐⭐ |
+| 用户满意度 | 达到90分以上 | 2025年Q2 | ⭐⭐⭐⭐⭐ |
+
+## 二、技术架构
+
+### 2.1 系统架构设计
+
+系统采用**三层架构**设计：
+
+- **展示层**：提供用户交互界面
+- **业务层**：处理核心业务逻辑
+- **数据层**：负责数据存储和管理
+
+### 2.2 核心功能模块
+
+1. **用户管理模块**
+   - 用户注册与登录
+   - 权限管理
+   - 个人信息维护
+
+2. **数据分析模块**
+   - 实时数据监控
+   - 统计报表生成
+   - 趋势分析预测
+
+3. **系统管理模块**
+   - 系统配置
+   - 日志管理
+   - 备份恢复
+
+> 💡 **技术提示**：  
+> 系统采用微服务架构，支持水平扩展，确保高可用性。
+
+## 三、实施计划
+
+### 3.1 项目阶段
+
+\`\`\`mermaid
+graph LR
+    A[需求分析] --> B[设计阶段]
+    B --> C[开发实现]
+    C --> D[测试验证]
+    D --> E[上线部署]
+    E --> F[运维支持]
+\`\`\`
+
+### 3.2 时间安排
+
+- **第一阶段**（1-2周）：需求调研与分析
+- **第二阶段**（2-3周）：系统设计与评审
+- **第三阶段**（4-6周）：开发与测试
+- **第四阶段**（1周）：部署与培训
+
+## 四、预期效果
+
+通过本项目的实施，预期可以达到：
+
+- ✅ 业务流程自动化率达到80%
+- ✅ 数据处理效率提升3倍
+- ✅ 人力成本降低40%
+- ✅ 系统响应时间小于2秒`;
+            } else if (type === 'example2') {
+                document.getElementById('markdownInput').value = `# 产品功能说明文档
+
+## 功能概述
+
+本产品是一个**智能办公助手**，帮助用户提高工作效率。
+
+## 主要特性
+
+### 1. 文档处理
+
+支持多种文档格式的转换和编辑：
+
+- **Markdown** → PDF / Word / HTML
+- **Word** → PDF / Markdown
+- **Excel** → CSV / JSON
+
+### 2. 数据统计
+
+#### 2.1 销售数据分析
+
+\`\`\`mermaid
+pie title 季度销售占比
+    "第一季度" : 30
+    "第二季度" : 25
+    "第三季度" : 20
+    "第四季度" : 25
+\`\`\`
+
+#### 2.2 用户增长趋势
+
+| 月份 | 新增用户 | 活跃用户 | 留存率 |
+|-----|---------|---------|--------|
+| 1月 | 1,200 | 8,500 | 85% |
+| 2月 | 1,500 | 9,800 | 87% |
+| 3月 | 1,800 | 11,200 | 89% |
+
+### 3. 工作流程
+
+\`\`\`mermaid
+graph TD
+    A[开始] --> B{检查权限}
+    B -->|有权限| C[执行操作]
+    B -->|无权限| D[拒绝访问]
+    C --> E{操作成功?}
+    E -->|是| F[返回结果]
+    E -->|否| G[错误处理]
+    G --> F
+    D --> F
+    F --> H[结束]
+\`\`\`
+
+## 使用指南
+
+### 快速开始
+
+1. 下载并安装软件
+2. 创建账号并登录
+3. 开始使用核心功能
+
+### 常见问题
+
+**Q: 支持哪些操作系统？**  
+A: 支持 Windows 10+、macOS 10.14+、主流Linux发行版
+
+**Q: 数据是否安全？**  
+A: 采用AES-256加密，确保数据安全
+
+**Q: 如何获取技术支持？**  
+A: 可通过邮件、在线客服获取7×24小时支持
+
+## 更新日志
+
+### v2.0.0 (2024-11-11)
+- ✨ 新增批量处理功能
+- 🐛 修复若干已知问题
+- ⚡ 性能优化，速度提升50%
+
+### v1.5.0 (2024-10-01)
+- ✨ 支持更多文件格式
+- 🔒 增强安全性
+- 📱 优化移动端体验`;
+            }
+            
+            // 触发预览
+            previewMarkdown();
+            showMessage('✅ 示例内容已加载', 'success');
+        }
+
+        // 清空内容
+        function clearContent() {
+            document.getElementById('markdownInput').value = '';
+            document.getElementById('previewContent').innerHTML = 
+                '<p style="color: #999; text-align: center; padding: 50px;">预览内容将显示在这里...</p>';
+            showMessage('内容已清空', 'success');
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            console.log('Markdown转DOCX工具已就绪');
+        });
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+venv/
+.venv/
+md2docx/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 临时文件
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# 生成的图片
+mermaid_images/*.png
+!mermaid_images/.gitkeep
+
+# 测试输出
+测试输出*.docx
+test*.png
+test*.docx
+
+# Pandoc安装包
+*.msi
+
