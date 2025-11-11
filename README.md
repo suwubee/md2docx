@@ -24,6 +24,7 @@
 **步骤1：安装系统依赖**
 ```bash
 # 运行系统依赖安装脚本（需要sudo权限）
+# 支持 Debian/Ubuntu/CentOS/RHEL
 bash setup.sh
 ```
 
@@ -31,10 +32,14 @@ bash setup.sh
 - ✅ Pandoc（文档转换引擎）
 - ✅ 中文字体（文泉驿字体）
 - ✅ 清理matplotlib字体缓存
+- ✅ 自动检测系统类型（Debian/Ubuntu 使用apt-get，CentOS/RHEL 使用yum/dnf）
 
 **步骤2：安装Python依赖**
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
+
+# 或使用国内镜像源（推荐）
+pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 **步骤3：启动应用**
@@ -43,6 +48,12 @@ python3 app.py
 ```
 
 访问 `http://127.0.0.1:5000` 开始使用！
+
+**CentOS/RHEL 防火墙配置（如需远程访问）：**
+```bash
+sudo firewall-cmd --add-port=5000/tcp --permanent
+sudo firewall-cmd --reload
+```
 
 ### 方法二：手动安装
 
@@ -68,7 +79,14 @@ sudo apt-get install -y pandoc
 
 **Linux (CentOS/RHEL)：**
 ```bash
+# 启用 EPEL 仓库
+sudo yum install -y epel-release
+# 安装 Pandoc
 sudo yum install -y pandoc
+
+# CentOS 8+ 使用 dnf
+sudo dnf install -y epel-release
+sudo dnf install -y pandoc
 ```
 
 **Mac：**
@@ -96,10 +114,22 @@ pip install -r requirements.txt
 
 #### 3. 安装中文字体支持（可选但推荐）
 
-**Linux：**
+**Linux (Debian/Ubuntu)：**
 ```bash
 # 安装文泉驿字体
 sudo apt-get install -y fonts-wqy-zenhei fonts-wqy-microhei
+
+# 清除matplotlib字体缓存
+rm -rf ~/.cache/matplotlib
+```
+
+**Linux (CentOS/RHEL)：**
+```bash
+# 安装文泉驿字体
+sudo yum install -y wqy-zenhei-fonts wqy-microhei-fonts
+
+# CentOS 8+ 使用 dnf
+sudo dnf install -y wqy-zenhei-fonts wqy-microhei-fonts
 
 # 清除matplotlib字体缓存
 rm -rf ~/.cache/matplotlib
